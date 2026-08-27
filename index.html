@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Referral Management Document Portal</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{
+  --bg:#f5f7fb; --card:#fff; --text:#172033; --muted:#667085;
+  --line:#e5e7eb; --primary:#315efb; --primary2:#1f46d8;
+  --success:#16834b; --danger:#c43232; --shadow:0 12px 35px rgba(20,35,70,.08);
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial;background:var(--bg);color:var(--text)}
+button,input{font:inherit}
+.app{min-height:100vh;display:flex}
+.sidebar{width:260px;background:#111827;color:#fff;padding:24px 18px;position:fixed;inset:0 auto 0 0}
+.logo{display:flex;gap:11px;align-items:center;font-weight:800;font-size:18px;margin-bottom:35px}
+.logo-icon{width:36px;height:36px;border-radius:10px;background:#315efb;display:grid;place-items:center}
+.nav-title{font-size:11px;text-transform:uppercase;letter-spacing:.12em;color:#98a2b3;margin:20px 10px 8px}
+.nav-item{padding:11px 12px;border-radius:9px;color:#d0d5dd;margin:3px 0}
+.nav-item.active{background:#24304a;color:#fff}
+.main{margin-left:260px;width:calc(100% - 260px);padding:28px 34px}
+.topbar{display:flex;justify-content:space-between;align-items:center;margin-bottom:26px}
+h1{font-size:27px;margin:0 0 5px}.subtitle{color:var(--muted);font-size:14px}
+.status{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:13px}
+.dot{width:8px;height:8px;border-radius:50%;background:#f59e0b}.dot.ok{background:#22c55e}.dot.bad{background:#ef4444}
+.grid{display:grid;grid-template-columns:1.15fr .85fr;gap:22px}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:22px}
+.card-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:18px}
+.card h2{font-size:17px;margin:0}.count{background:#eef2ff;color:#315efb;padding:4px 9px;border-radius:999px;font-size:12px;font-weight:700}
+.actions{display:flex;gap:10px;flex-wrap:wrap}
+.btn{border:0;border-radius:9px;padding:10px 15px;cursor:pointer;font-weight:700}
+.btn-primary{background:var(--primary);color:#fff}.btn-primary:hover{background:var(--primary2)}
+.btn-secondary{background:#fff;border:1px solid var(--line);color:var(--text)}
+.btn-danger{background:#fff;border:1px solid #fecaca;color:var(--danger)}
+.btn:disabled{opacity:.5;cursor:not-allowed}
+.folder-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:12px}
+.folder{border:1px solid var(--line);border-radius:13px;padding:15px;cursor:pointer;transition:.15s;background:#fff}
+.folder:hover,.folder.selected{border-color:#9bb0ff;box-shadow:0 5px 18px rgba(49,94,251,.1)}
+.folder-icon{font-size:27px}.folder-name{font-weight:750;margin-top:8px}.folder-meta{font-size:12px;color:var(--muted);margin-top:4px}
+.empty{text-align:center;padding:45px 15px;color:var(--muted);border:1px dashed var(--line);border-radius:12px}
+.file-list{display:flex;flex-direction:column;gap:9px}
+.file{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--line);border-radius:11px;padding:12px 13px}
+.file-left{display:flex;gap:11px;align-items:center;min-width:0}.file-icon{font-size:21px}
+.file-name{font-weight:650;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.file-meta{font-size:11px;color:var(--muted);margin-top:3px}
+.upload-zone{border:2px dashed #cdd5e1;border-radius:14px;padding:27px;text-align:center;background:#fafbff;cursor:pointer}
+.upload-zone.drag{border-color:#315efb;background:#f0f4ff}
+.upload-zone strong{display:block;margin-bottom:5px}.upload-zone span{font-size:12px;color:var(--muted)}
+input[type=file]{display:none}
+.field{display:flex;gap:9px;margin-bottom:12px}.field input{flex:1;border:1px solid var(--line);border-radius:9px;padding:10px 12px;outline:none}.field input:focus{border-color:#7890ff;box-shadow:0 0 0 3px #e9edff}
+.message{margin-top:13px;padding:10px 12px;border-radius:9px;font-size:13px;display:none}.message.show{display:block}.message.ok{background:#ecfdf3;color:#087443}.message.err{background:#fff1f2;color:#b42318}
+.banner{padding:13px 15px;border-radius:11px;background:#eef4ff;border:1px solid #dbe5ff;color:#344054;font-size:13px;margin-bottom:20px}
+@media(max-width:900px){.sidebar{width:210px}.main{margin-left:210px;width:calc(100% - 210px);padding:20px}.grid{grid-template-columns:1fr}}
+@media(max-width:650px){.sidebar{display:none}.main{margin-left:0;width:100%}.topbar{align-items:flex-start;gap:15px;flex-direction:column}}
+</style>
+</head>
+<body>
+<aside class="sidebar">
+  <div class="logo"><div class="logo-icon">R</div> Referral Portal</div>
+  <div class="nav-title">Workspace</div>
+  <div class="nav-item active">📁 Documents</div>
+  <div class="nav-item">⚡ Automation</div>
+  <div class="nav-item">⚙ Settings</div>
+  <div class="nav-title">Event flow</div>
+  <div class="nav-item">Upload → Supabase</div>
+  <div class="nav-item">Event → Maestro</div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <h1>Referral Management</h1>
+      <div class="subtitle">Create project folders and securely manage referral documents.</div>
+    </div>
+    <div class="status"><span id="statusDot" class="dot"></span><span id="statusText">Connecting to Supabase…</span></div>
+  </div>
+
+  <div class="banner">
+    <strong>Event-driven processing:</strong> files uploaded to the configured referral folder can be routed to the UiPath Maestro webhook by the Supabase backend. This page itself never exposes the Maestro secret.
+  </div>
+
+  <div class="grid">
+    <section class="card">
+      <div class="card-head">
+        <h2>Root folders</h2>
+        <span id="folderCount" class="count">0</span>
+      </div>
+      <div class="field">
+        <input id="folderName" maxlength="60" placeholder="Create a root folder, e.g. Referralmanagement">
+        <button id="createBtn" class="btn btn-primary">+ Create</button>
+      </div>
+      <div id="folderList" class="folder-list"></div>
+      <div id="folderMessage" class="message"></div>
+    </section>
+
+    <section class="card">
+      <div class="card-head">
+        <div>
+          <h2 id="selectedTitle">Select a folder</h2>
+          <div id="selectedMeta" class="subtitle">Choose a folder to upload documents.</div>
+        </div>
+        <div class="actions">
+          <button id="refreshBtn" class="btn btn-secondary">Refresh</button>
+        </div>
+      </div>
+
+      <label id="uploadZone" class="upload-zone" for="fileInput">
+        <strong>Drop PDF/documents here or click to upload</strong>
+        <span>Files are stored in the selected Supabase Storage bucket.</span>
+      </label>
+      <input id="fileInput" type="file" multiple accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt">
+
+      <div style="height:18px"></div>
+      <div class="card-head" style="margin-bottom:10px">
+        <h2>Documents</h2><span id="fileCount" class="count">0</span>
+      </div>
+      <div id="fileList" class="file-list">
+        <div class="empty">Select a folder to see documents.</div>
+      </div>
+      <div id="fileMessage" class="message"></div>
+    </section>
+  </div>
+</main>
+
+<script>
+/* =========================
+   SUPABASE CONFIG
+   =========================
+   Only the public/publishable/anon key belongs here.
+   NEVER put the service-role/secret key in this file.
+*/
+const SUPABASE_URL = "https://wysnjsnbraiwooplgxgv.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_rUdw6p2HW394IjHoMexMXw_GhEYimpQ";
+
+const client = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+let projects = [];
+let selectedProject = null;
+
+const $ = id => document.getElementById(id);
+const showMessage = (id, text, ok=true) => {
+  const el=$(id); el.textContent=text; el.className="message show "+(ok?"ok":"err");
+};
+const clearMessage = id => { const el=$(id); el.className="message"; el.textContent=""; };
+
+function setConnection(ok, text){
+  $("statusDot").className="dot "+(ok?"ok":"bad");
+  $("statusText").textContent=text;
+}
+
+async function loadProjects(){
+  const {data,error}=await client.from("projects").select("*").order("created_at",{ascending:false});
+  if(error){ setConnection(false,"Supabase connection/config error"); showMessage("folderMessage",error.message,false); return; }
+  projects=data||[];
+  setConnection(true,"Supabase connected");
+  renderFolders();
+}
+
+function renderFolders(){
+  $("folderCount").textContent=projects.length;
+  const box=$("folderList");
+  if(!projects.length){
+    box.innerHTML='<div class="empty" style="grid-column:1/-1">No root folders yet. Create your first project above.</div>';
+    return;
+  }
+  box.innerHTML=projects.map(p=>`
+    <div class="folder ${selectedProject?.id===p.id?"selected":""}" onclick="selectProject('${p.id}')">
+      <div class="folder-icon">📁</div>
+      <div class="folder-name">${escapeHtml(p.name)}</div>
+      <div class="folder-meta">${escapeHtml(p.bucket_name || "Storage configured")}</div>
+    </div>`).join("");
+}
+
+window.selectProject = async function(id){
+  selectedProject=projects.find(p=>p.id===id)||null;
+  renderFolders();
+  if(!selectedProject) return;
+  $("selectedTitle").textContent=selectedProject.name;
+  $("selectedMeta").textContent=`Bucket: ${selectedProject.bucket_name}`;
+  clearMessage("fileMessage");
+  await loadFiles();
+};
+
+async function createProject(){
+  clearMessage("folderMessage");
+  const name=$("folderName").value.trim();
+  if(!name){showMessage("folderMessage","Enter a folder name.",false);return;}
+  $("createBtn").disabled=true;
+  $("createBtn").textContent="Creating…";
+  try{
+    const {data,error}=await client.functions.invoke("create-project",{body:{name}});
+    if(error) throw error;
+    if(!data?.project) throw new Error(data?.error || "Project creation failed.");
+    $("folderName").value="";
+    showMessage("folderMessage",`Created ${data.project.name} successfully.`);
+    await loadProjects();
+    await selectProject(data.project.id);
+  }catch(e){ showMessage("folderMessage",e.message||String(e),false); }
+  finally{$("createBtn").disabled=false;$("createBtn").textContent="+ Create";}
+}
+
+async function uploadFiles(files){
+  clearMessage("fileMessage");
+  if(!selectedProject){showMessage("fileMessage","Select a root folder first.",false);return;}
+  if(!files.length)return;
+  for(const file of files){
+    const safeName=file.name.replace(/[^\w.\- ()]/g,"_");
+    const path=`${crypto.randomUUID()}-${safeName}`;
+    const {error}=await client.storage.from(selectedProject.bucket_name).upload(path,file,{upsert:false});
+    if(error){showMessage("fileMessage",`${file.name}: ${error.message}`,false);continue;}
+    showMessage("fileMessage",`${file.name} uploaded. Storage event can now trigger Maestro.`);
+  }
+  await loadFiles();
+}
+
+async function loadFiles(){
+  if(!selectedProject)return;
+  const {data,error}=await client.storage.from(selectedProject.bucket_name).list("",{limit:200,sortBy:{column:"created_at",order:"desc"}});
+  if(error){$("fileList").innerHTML='<div class="empty">Unable to list files.</div>';showMessage("fileMessage",error.message,false);return;}
+  const files=data||[];
+  $("fileCount").textContent=files.length;
+  if(!files.length){$("fileList").innerHTML='<div class="empty">No documents in this folder yet.</div>';return;}
+  $("fileList").innerHTML=files.map(f=>`
+    <div class="file">
+      <div class="file-left">
+        <div class="file-icon">📄</div>
+        <div style="min-width:0"><div class="file-name">${escapeHtml(f.name)}</div><div class="file-meta">${f.metadata?.mimetype||"document"} · ${formatBytes(f.metadata?.size||0)}</div></div>
+      </div>
+      <button class="btn btn-danger" onclick="deleteFile('${encodeURIComponent(f.name)}')">Delete</button>
+    </div>`).join("");
+}
+
+window.deleteFile=async function(encoded){
+  if(!selectedProject)return;
+  const name=decodeURIComponent(encoded);
+  if(!confirm(`Delete ${name}?`))return;
+  const {error}=await client.storage.from(selectedProject.bucket_name).remove([name]);
+  if(error){showMessage("fileMessage",error.message,false);return;}
+  showMessage("fileMessage",`${name} deleted.`);
+  await loadFiles();
+};
+
+function formatBytes(bytes){
+  if(!bytes)return "0 KB";
+  const units=["B","KB","MB","GB"]; let i=Math.floor(Math.log(bytes)/Math.log(1024));
+  return `${(bytes/Math.pow(1024,i)).toFixed(i?1:0)} ${units[i]}`;
+}
+function escapeHtml(s){return String(s).replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]));}
+
+$("createBtn").onclick=createProject;
+$("folderName").addEventListener("keydown",e=>{if(e.key==="Enter")createProject();});
+$("refreshBtn").onclick=()=>selectedProject?loadFiles():loadProjects();
+$("fileInput").addEventListener("change",e=>uploadFiles([...e.target.files]));
+["dragenter","dragover"].forEach(ev=>$("uploadZone").addEventListener(ev,e=>{e.preventDefault();$("uploadZone").classList.add("drag")}));
+["dragleave","drop"].forEach(ev=>$("uploadZone").addEventListener(ev,e=>{e.preventDefault();$("uploadZone").classList.remove("drag")}));
+$("uploadZone").addEventListener("drop",e=>uploadFiles([...e.dataTransfer.files]));
+
+loadProjects();
+</script>
+</body>
+</html>
