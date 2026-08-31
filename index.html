@@ -1,0 +1,448 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>OnBase</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--navy:#24364b;--blue:#2f6fa3;--ink:#25313d;--muted:#667789;--bg:#eef1f4;--line:#cbd3db;--sel:#dceaf5;--green:#3d7d5a;--red:#a84b4b}
+*{box-sizing:border-box}html,body{margin:0;height:100%;font-family:"Segoe UI",Arial,sans-serif;color:var(--ink);background:var(--bg);font-size:14px}button,input,select{font:inherit}button{cursor:pointer}
+.topbar{height:48px;background:var(--navy);color:#fff;display:flex;align-items:center;padding:0 14px;gap:18px;box-shadow:0 1px 4px #0003}
+.brand{display:flex;align-items:center;gap:9px;font-weight:600;min-width:220px}.brandmark{width:28px;height:28px;border:1px solid #b9cad9;background:#35506b;display:grid;place-items:center;font-weight:700}.topsearch{flex:1;max-width:570px;position:relative}.topsearch input{width:100%;height:30px;padding:0 12px 0 34px}.topsearch span{position:absolute;left:11px;top:5px;color:#647789}.user{margin-left:auto;display:flex;align-items:center;gap:8px}.avatar{width:28px;height:28px;border-radius:50%;background:#68839b;display:grid;place-items:center}
+.ribbon{height:88px;background:#f7f8f9;border-bottom:1px solid var(--line);display:flex;align-items:stretch;padding:0 10px;gap:2px;overflow:auto}.ribbonTab{min-width:72px;border:0;background:transparent;color:#425466;padding:8px 12px 5px;border-bottom:3px solid transparent;font-weight:600}.ribbonTab.active{background:#fff;border-bottom-color:var(--blue);color:#244d70}.ribbonGroup{display:flex;align-items:center;border-right:1px solid #dfe4e9;padding:5px 12px;gap:6px}.rbtn{min-width:66px;height:64px;border:1px solid transparent;background:transparent;color:#35495c;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px}.rbtn:hover{background:#e8edf2}.rico{font-size:21px}.rlabel{font-size:11px;white-space:nowrap}
+.workspace{display:grid;grid-template-columns:245px minmax(0,1fr);height:calc(100vh - 160px);min-height:600px}.sidebar{background:#f7f8fa;border-right:1px solid var(--line);overflow:auto}.sideHead{padding:11px 13px 7px;font-size:11px;text-transform:uppercase;color:#687a8c;font-weight:700;border-bottom:1px solid var(--line)}.navItem{display:flex;align-items:center;gap:9px;padding:9px 13px;color:#34485b}.navItem:hover{background:#edf2f6}.navItem.active{background:var(--sel);color:#244d70;font-weight:600;border-left:3px solid var(--blue);padding-left:10px}.projectList{padding:6px}.projectItem{padding:8px 9px;margin:2px 0;border-radius:3px;display:flex;align-items:center;gap:8px;cursor:pointer;color:#405466}.projectItem:hover{background:#e8edf2}.projectItem.active{background:#dbe8f3;color:#214e73;font-weight:600}.projectItem small{display:block;color:#7b8b9a;font-weight:400;margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}.sideFooter{padding:12px;border-top:1px solid var(--line);margin-top:8px}
+.main{min-width:0;overflow:auto;background:#fff}.breadcrumb{height:38px;border-bottom:1px solid var(--line);display:flex;align-items:center;padding:0 16px;color:#6b7d8e;font-size:12px;background:#fbfcfd}.breadcrumb b{color:#34495b}.page{padding:16px 18px 28px;max-width:1500px}.pageTitle{display:flex;justify-content:space-between;align-items:flex-start;gap:15px;margin-bottom:14px}.pageTitle h1{margin:0;font-size:21px;font-weight:600;color:#2b4054}.pageTitle p{margin:4px 0 0;color:var(--muted);font-size:12px}.actions{display:flex;gap:7px}
+.btn{height:31px;padding:0 12px;border:1px solid #b9c5d0;background:#fff;color:#34495b;border-radius:3px}.btn:hover{background:#f0f3f6}.btn.primary{background:#2f6fa3;border-color:#285f8c;color:#fff}.btn.danger{color:var(--red)}
+.dashboardGrid{display:grid;grid-template-columns:repeat(4,minmax(150px,1fr));gap:10px;margin-bottom:14px}.tile{border:1px solid var(--line);background:#fff;min-height:88px;padding:12px;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 2px 8px #1e2d3c18}.tileTop{display:flex;justify-content:space-between;color:#6c7e8f;font-size:12px}.tileNum{font-size:27px;font-weight:600;color:#2b4054}.tile.inbox{border-top:3px solid #5c86a7}.tile.completed{border-top:3px solid var(--green)}.tile.rejected{border-top:3px solid var(--red)}
+.panel{border:1px solid var(--line);background:#fff;margin-bottom:14px;box-shadow:0 2px 8px #1e2d3c18}.panelHead{height:40px;background:#f5f7f9;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between;padding:0 11px;font-weight:600;color:#3a5063}.panelBody{padding:12px}
+.folderTabs{display:flex;border-bottom:1px solid var(--line);background:#f7f8fa}.folderTab{border:0;border-right:1px solid var(--line);background:#edf1f4;padding:9px 16px;color:#4c6173;font-weight:600}.folderTab.active{background:#fff;color:#244d70;border-top:2px solid var(--blue);padding-top:7px}
+.dropzone{border:1px dashed #aebbc7;background:#fafbfd;min-height:100px;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;margin-bottom:12px;color:#647789}.dropzone.drag{background:#eaf2f8;border-color:#2f6fa3}.dropzone strong{display:block;color:#40576a;margin-bottom:4px}
+.fileTable{width:100%;border-collapse:collapse}.fileTable th{text-align:left;background:#eef2f5;color:#516576;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 9px;font-size:12px}.fileTable td{padding:8px 9px;border-bottom:1px solid #e5e9ed;color:#354a5c}.fileTable tr:hover td{background:#f7fafc}.fileName{font-weight:600;color:#2e526f}.status{display:inline-flex;padding:3px 7px;border-radius:3px;font-size:11px;font-weight:600;border:1px solid currentColor}.status.inbox{color:#4d7899;background:#edf5fa}.status.completed{color:#397353;background:#eef7f1}.status.rejected{color:#9d4c4c;background:#fbefef}.empty{padding:32px;text-align:center;color:#7a8997}.welcome{border:1px solid var(--line);background:#fff;box-shadow:0 2px 8px #1e2d3c18;padding:28px;text-align:center}
+.modal{position:fixed;inset:0;background:#1d2d3d88;display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}.modal.show{display:flex}.dialog{width:min(520px,100%);background:#fff;border:1px solid #aeb9c4;box-shadow:0 12px 35px #0004}.dialogHead{padding:12px 15px;background:var(--navy);color:#fff;font-weight:600;display:flex;justify-content:space-between}.dialogBody{padding:16px}.field{margin-bottom:12px}.field label{display:block;font-size:12px;color:#526779;font-weight:600;margin-bottom:5px}.field input,.field select{width:100%;height:34px;border:1px solid #b9c5cf;border-radius:3px;padding:0 9px}.dialogFoot{padding:11px 15px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:7px;background:#f7f8fa}.apiBox{font-family:Consolas,monospace;background:#263746;color:#e8f0f6;padding:12px;border-radius:3px;white-space:pre-wrap;overflow:auto;font-size:12px}.note{font-size:12px;color:#6d7d8b;line-height:1.5}.toast{position:fixed;right:18px;bottom:18px;z-index:80;background:#263746;color:#fff;padding:10px 13px;border-radius:3px;box-shadow:0 5px 18px #0004;display:none;max-width:420px}.toast.show{display:block}.toast.err{background:#8d3f3f}.hidden{display:none!important}
+@media(max-width:950px){.workspace{grid-template-columns:190px 1fr}.dashboardGrid{grid-template-columns:repeat(2,1fr)}.brand{min-width:160px}}@media(max-width:700px){.ribbon{height:78px}.workspace{height:calc(100vh - 126px);grid-template-columns:1fr}.sidebar{display:none}.dashboardGrid{grid-template-columns:1fr 1fr}.topsearch{display:none}}
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <div class="brand"><div class="brandmark">DI</div><div>OnBase</div></div>
+  <div class="topsearch"><span>⌕</span><input id="globalSearch" placeholder="Search documents, projects, or POCs..."></div>
+  <div class="user"><div class="avatar">U</div><span>Workspace User</span> ▾</div>
+</header>
+
+<nav class="ribbon">
+  <button class="ribbonTab active" data-tab="home">Home</button>
+  <button class="ribbonTab" data-tab="documents">Documents</button>
+  <button class="ribbonTab" data-tab="projects">Applications</button>
+  <button class="ribbonTab" data-tab="api">Administration</button>
+  <div class="ribbonGroup">
+    <button class="rbtn" id="newApplicationBtn"><span class="rico">＋</span><span class="rlabel">New Application</span></button>
+    <button class="rbtn" id="refreshBtn"><span class="rico">↻</span><span class="rlabel">Refresh</span></button>
+  </div>
+  <div class="ribbonGroup">
+    <button class="rbtn" id="uploadRibbon"><span class="rico">⇧</span><span class="rlabel">Import</span></button>
+    <button class="rbtn" id="apiRibbon"><span class="rico">⌘</span><span class="rlabel">API</span></button>
+  </div>
+  <div class="ribbonGroup">
+    <button class="rbtn" id="retrieveRibbon"><span class="rico">⌕</span><span class="rlabel">Retrieve</span></button>
+    <button class="rbtn" id="workflowRibbon"><span class="rico">↻</span><span class="rlabel">Workflow</span></button>
+  </div>
+  <div class="ribbonGroup">
+    <button class="rbtn" id="helpRibbon"><span class="rico">?</span><span class="rlabel">Help</span></button>
+  </div>
+</nav>
+
+<div class="workspace">
+<aside class="sidebar">
+  <div class="sideHead">Navigation</div>
+  <div class="navItem active" data-view="home"><span>⌂</span>Home</div>
+  <div class="navItem" data-view="documents"><span>▤</span>Document Retrieval</div>
+  <div class="navItem" data-view="projects"><span>▦</span>Applications</div>
+  <div class="navItem" data-view="api"><span>⌘</span>Administration / API</div>
+  <div class="sideHead" style="margin-top:8px">Favorites / Applications</div>
+  <div id="projectList" class="projectList"></div>
+  <div style="padding:12px;border-top:1px solid var(--line);margin-top:8px"><button class="btn primary" style="width:100%" id="sideNewApplication">＋ Create Application</button></div>
+</aside>
+
+<main class="main">
+<div class="breadcrumb">OnBase&nbsp;&nbsp;›&nbsp;&nbsp;<b id="crumb">Home</b></div>
+
+<section id="homeView" class="page">
+  <div class="pageTitle"><div><h1>Home</h1><p>Enterprise Content Management & Document Processing</p></div><button class="btn primary" id="homeCreate">＋ New Application</button></div>
+  <div class="dashboardGrid">
+    <div class="tile"><div class="tileTop"><span>Applications</span><span>▦</span></div><div class="tileNum" id="statApplications">0</div></div>
+    <div class="tile inbox"><div class="tileTop"><span>INBOX</span><span>▣</span></div><div class="tileNum" id="statInbox">0</div></div>
+    <div class="tile completed"><div class="tileTop"><span>COMPLETED</span><span>✓</span></div><div class="tileNum" id="statCompleted">0</div></div>
+    <div class="tile rejected"><div class="tileTop"><span>REJECTED</span><span>!</span></div><div class="tileNum" id="statRejected">0</div></div>
+  </div>
+  <div id="homeEmpty" class="welcome"><div style="font-size:42px">▣</div><h2>Welcome to OnBase</h2><p>Create an application to provision its dedicated storage workspace.</p><button class="btn primary" id="welcomeCreate">Create First Application</button></div>
+  <div id="homeApplicationsPanel" class="panel hidden"><div class="panelHead"><span>Application Workspaces</span><button class="btn" id="homeRefresh">Refresh</button></div><div class="panelBody"><table class="fileTable"><thead><tr><th>Application</th><th>Storage Bucket</th><th>Created</th><th>Open</th></tr></thead><tbody id="homeApplications"></tbody></table></div></div>
+</section>
+
+<section id="projectView" class="page hidden">
+  <div class="pageTitle"><div><h1 id="projectTitle">Application</h1><p id="projectSubtitle">Application document workspace</p></div><div><button class="btn" id="projectRefresh">↻ Refresh</button> <button class="btn primary" id="projectUpload">⇧ Import Documents</button></div></div>
+  <div class="dashboardGrid">
+    <div class="tile inbox"><div class="tileTop"><span>INBOX</span><span>▣</span></div><div class="tileNum" id="pInbox">0</div></div>
+    <div class="tile completed"><div class="tileTop"><span>COMPLETED</span><span>✓</span></div><div class="tileNum" id="pCompleted">0</div></div>
+    <div class="tile rejected"><div class="tileTop"><span>REJECTED</span><span>!</span></div><div class="tileNum" id="pRejected">0</div></div>
+    <div class="tile"><div class="tileTop"><span>Bucket</span><span>▦</span></div><div class="tileNum" id="pBucket" style="font-size:13px;word-break:break-all">—</div></div>
+  </div>
+  <div class="panel">
+    <div class="panelHead">
+      <span>Document Workflow</span>
+      <span class="status inbox">READY</span>
+    </div>
+    <div class="panelBody" style="padding:0">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:8px;padding:10px 14px;background:#fbfcfd;border-bottom:1px solid var(--line);font-size:12px;color:#607386">
+        <span>Capture</span><b>›</b><span>Review</span><b>›</b><span>Process</span><b>›</b><span>Complete</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="panelHead"><span>Application Administration</span><span class="status rejected">DANGER ZONE</span></div>
+    <div class="panelBody" style="display:flex;align-items:center;justify-content:space-between;gap:18px">
+      <div><b style="color:#394f62">Delete this application</b><div class="note">Permanently deletes the application record, storage bucket, and all documents.</div></div>
+      <button type="button" class="btn danger" id="deleteApplicationBtn">Delete Application</button>
+    </div>
+  </div>
+
+  <div class="panel">
+    <div class="folderTabs"><button class="folderTab active" data-folder="INBOX">INBOX</button><button class="folderTab" data-folder="COMPLETED">COMPLETED</button><button class="folderTab" data-folder="REJECTED">REJECTED</button></div>
+    <div class="panelBody">
+      <div id="dropzone" class="dropzone"><div><div style="font-size:27px">⇧</div><strong>Import documents into INBOX</strong><span>Drag & drop or use Import. Original filename is retained.</span></div></div>
+      <input id="fileInput" type="file" multiple hidden accept=".pdf,.doc,.docx,.png,.jpg,.jpeg,.txt">
+      <table class="fileTable"><thead><tr><th>Document Name</th><th>Type</th><th>Size</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="documentRows"></tbody></table>
+      <div id="docEmpty" class="empty hidden">No documents in this folder.</div>
+    </div>
+  </div>
+</section>
+
+<section id="projectsView" class="page hidden">
+  <div class="pageTitle"><div><h1>Applications</h1><p>Each application has its own storage bucket and standard folders.</p></div><button class="btn primary" id="projectsCreate">＋ New Application</button></div>
+  <div class="panel"><div class="panelHead"><span>Application Registry</span><button class="btn" id="projectsRefresh">↻ Refresh</button></div><div class="panelBody"><table class="fileTable"><thead><tr><th>Application Name</th><th>Bucket</th><th>Created</th><th>Workspace</th></tr></thead><tbody id="projectsRows"></tbody></table></div></div>
+</section>
+
+<section id="documentsView" class="page hidden">
+  <div class="pageTitle"><div><h1>Document Retrieval</h1><p>Retrieve one document from a project's INBOX using the reusable get-document API.</p></div></div>
+  <div class="panel"><div class="panelHead"><span>Retrieve One Document</span><span class="status inbox">POST</span></div><div class="panelBody">
+    <div class="field" style="max-width:520px"><label>Application</label><select id="retrieveApplication"></select></div>
+    <button class="btn primary" id="retrieveBtn">Retrieve Next Document</button><div id="retrieveResult" style="margin-top:15px"></div>
+  </div></div>
+</section>
+
+<section id="apiView" class="page hidden">
+  <div class="pageTitle"><div><h1>Integration / API</h1><p>One reusable endpoint routes by project name and retrieves one document at a time.</p></div></div>
+  <div class="panel"><div class="panelHead"><span>Get Document API</span><span class="status inbox">POST</span></div><div class="panelBody"><div class="apiBox" id="apiDetails"></div></div></div>
+  <div class="panel"><div class="panelHead"><span>Move Document API</span><span class="status completed">POST</span></div><div class="panelBody"><div class="apiBox" id="moveApiDetails"></div></div></div>
+</section>
+</main></div>
+
+
+<div class="modal" id="deleteModal">
+  <div class="dialog">
+    <div class="dialogHead">
+      <span>Delete Application</span>
+      <button id="closeDeleteModal" style="border:0;background:none;color:#fff;font-size:18px">×</button>
+    </div>
+    <div class="dialogBody">
+      <div style="border:1px solid #d7b5b5;background:#fbefef;padding:12px;margin-bottom:14px;color:#7d3d3d">
+        <b>This action cannot be undone.</b><br>
+        The application record, storage bucket, and all documents belonging to this application will be permanently deleted.
+      </div>
+      <div class="field">
+        <label>Application to delete</label>
+        <input id="deleteProjectDisplay" readonly>
+      </div>
+      <div class="field">
+        <label>Type the application name to confirm</label>
+        <input id="deleteConfirmation" autocomplete="off" placeholder="Type the exact application name">
+      </div>
+      <div class="note">Confirmation must exactly match the application name.</div>
+    </div>
+    <div class="dialogFoot">
+      <button class="btn" id="cancelDelete">Cancel</button>
+      <button class="btn danger" id="confirmDelete" disabled>Delete Permanently</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal" id="projectModal"><div class="dialog">
+  <div class="dialogHead"><span>Create Application Workspace</span><button id="closeModal" style="border:0;background:none;color:#fff;font-size:18px">×</button></div>
+  <div class="dialogBody"><div class="note" style="margin-bottom:12px">Creates the application record and provisions its dedicated storage bucket with INBOX, COMPLETED and REJECTED folders.</div><div id="createStatus" class="note hidden" style="margin-bottom:10px;padding:8px;background:#eef5fa;border:1px solid #c9dbe8">Ready</div><div class="field"><label>Application Name</label><input id="projectName" maxlength="80" placeholder="Referralmanagement"></div></div>
+  <div class="dialogFoot"><button class="btn" id="cancelModal">Cancel</button><button type="button" class="btn primary" id="createApplication">Create Application</button></div>
+</div></div>
+
+
+<div class="statusbar" style="position:fixed;bottom:0;left:0;right:0;height:24px;background:#e5e9ed;border-top:1px solid #c3ccd5;color:#607386;display:flex;align-items:center;justify-content:space-between;padding:0 10px;font-size:11px;z-index:25">
+  <span id="systemStatus">Ready</span>
+  <span>OnBase Enterprise Workspace</span>
+</div>
+<div id="toast" class="toast"></div>
+
+<script>
+const SUPABASE_URL="https://wysnjsnbraiwopolgxgv.supabase.co";
+const SUPABASE_PUBLISHABLE_KEY="sb_publishable_rUdw6p2HW394IjHoMexMXw_GhEYimpQ";
+const GET_DOCUMENT_URL=SUPABASE_URL+"/functions/v1/get-document";
+const MOVE_DOCUMENT_URL=SUPABASE_URL+"/functions/v1/move-document";
+const DELETE_APPLICATION_URL=SUPABASE_URL+"/functions/v1/delete-project";
+const sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_PUBLISHABLE_KEY);
+let projects=[],selected=null,currentFolder="INBOX";
+const $=id=>document.getElementById(id);
+function toast(m,e=false){const t=$("toast");t.textContent=m;t.className="toast show"+(e?" err":"");clearTimeout(window.__t);window.__t=setTimeout(()=>t.className="toast",3500)}
+function esc(s){return String(s??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#039;"}[c]))}
+function fmt(n){if(!n)return"0 B";const u=["B","KB","MB","GB"],i=Math.min(3,Math.floor(Math.log(n)/Math.log(1024)));return(n/1024**i).toFixed(i?1:0)+" "+u[i]}
+function date(s){try{return new Date(s).toLocaleString()}catch{return s||"—"}}
+async function listFolder(p,f){const {data,error}=await sb.storage.from(p.bucket_name).list(f,{limit:1000,sortBy:{column:"created_at",order:"asc"}});if(error)throw error;return(data||[]).filter(x=>x.name&&x.name!==".folder")}
+async function loadApplications(){const {data,error}=await sb.from("projects").select("*").order("created_at",{ascending:false});if(error)return toast(error.message,true);projects=data||[];$("statApplications").textContent=projects.length;renderApplications();updateRetrieve();renderHome();await globalStats()}
+function renderApplications(){$("projectList").innerHTML=projects.length?projects.map(p=>`<div class="projectItem ${selected?.id===p.id?"active":""}" onclick="openApplication('${p.id}')"><span>▦</span><div style="min-width:0">${esc(p.name)}<small>${esc(p.bucket_name||"")}</small></div></div>`).join(""):`<div class="note" style="padding:10px">No projects yet.</div>`}
+function renderHome(){$("homeEmpty").classList.toggle("hidden",projects.length>0);$("homeApplicationsPanel").classList.toggle("hidden",!projects.length);$("homeApplications").innerHTML=projects.map(p=>`<tr><td class="fileName">${esc(p.name)}</td><td>${esc(p.bucket_name||"—")}</td><td>${date(p.created_at)}</td><td><button class="btn" onclick="openApplication('${p.id}')">Open</button></td></tr>`).join("");$("projectsRows").innerHTML=projects.map(p=>`<tr><td class="fileName">${esc(p.name)}</td><td>${esc(p.bucket_name||"—")}</td><td>${date(p.created_at)}</td><td><button class="btn" onclick="openApplication('${p.id}')">Open Workspace</button></td></tr>`).join("")}
+async function globalStats(){let a=0,b=0,c=0;for(const p of projects){try{a+=(await listFolder(p,"INBOX")).length}catch{}try{b+=(await listFolder(p,"COMPLETED")).length}catch{}try{c+=(await listFolder(p,"REJECTED")).length}catch{}}$("statInbox").textContent=a;$("statCompleted").textContent=b;$("statRejected").textContent=c}
+async function openApplication(id){selected=projects.find(p=>p.id===id);if(!selected)return;renderApplications();$("projectTitle").textContent=selected.name;$("projectSubtitle").textContent="Application workspace · "+selected.bucket_name;$("pBucket").textContent=selected.bucket_name||"—";showView("project");await refreshApplication()}
+window.openApplication=openApplication;
+async function refreshApplication(){if(!selected)return;for(const f of ["INBOX","COMPLETED","REJECTED"]){const map={INBOX:"pInbox",COMPLETED:"pCompleted",REJECTED:"pRejected"};try{$(map[f]).textContent=(await listFolder(selected,f)).length}catch{$(map[f]).textContent="—"}}await listDocuments()}
+async function listDocuments(){if(!selected)return;const rows=$("documentRows"),empty=$("docEmpty");rows.innerHTML="";try{const docs=await listFolder(selected,currentFolder);empty.classList.toggle("hidden",docs.length>0);rows.innerHTML=docs.map(d=>`<tr><td class="fileName">${esc(d.name)}</td><td>${esc(d.metadata?.mimetype||"document")}</td><td>${fmt(d.metadata?.size||0)}</td><td><span class="status ${currentFolder.toLowerCase()}">${currentFolder}</span></td><td>${date(d.created_at)}</td><td><button class="btn danger" onclick="deleteDocument('${encodeURIComponent(d.name)}')">Delete</button></td></tr>`).join("")}catch(e){empty.classList.remove("hidden");empty.textContent=e.message||"Unable to load documents."}}
+window.deleteDocument=async encoded=>{const n=decodeURIComponent(encoded);if(!confirm("Delete "+n+"?"))return;const {error}=await sb.storage.from(selected.bucket_name).remove([currentFolder+"/"+n]);if(error)return toast(error.message,true);toast("Document deleted");await refreshApplication();await globalStats()}
+async function uploadFiles(fs){if(!selected)return toast("Select a project first.",true);if(currentFolder!=="INBOX")return toast("Uploads are allowed only in INBOX.",true);for(const f of fs){if(f.size>52428800){toast(f.name+" exceeds 50 MB",true);continue}const n=f.name.replace(/[^\w.\- ()]/g,"_");const {error}=await sb.storage.from(selected.bucket_name).upload("INBOX/"+n,f,{upsert:false});if(error)toast(f.name+": "+error.message,true);else toast(f.name+" uploaded to INBOX")}await refreshApplication();await globalStats()}
+function updateRetrieve(){$("retrieveApplication").innerHTML=projects.length?projects.map(p=>`<option value="${esc(p.name)}">${esc(p.name)}</option>`).join(""):`<option value="">No projects</option>`}
+async function retrieveNext(){const project=$("retrieveApplication").value;if(!project)return toast("Select a project.",true);const box=$("retrieveResult");box.innerHTML='<div class="note">Calling get-document…</div>';try{const r=await fetch(GET_DOCUMENT_URL,{method:"POST",headers:{"Content-Type":"application/json","apikey":SUPABASE_PUBLISHABLE_KEY},body:JSON.stringify({project})});if(r.status===404){let x={};try{x=await r.json()}catch{}box.innerHTML=`<span class="status inbox">NO DOCUMENT</span><p class="note">${esc(x.error||"No documents available in INBOX.")}</p>`;return}if(!r.ok)throw new Error(await r.text());const blob=await r.blob(),name=decodeURIComponent(r.headers.get("X-Document-Name")||"document.pdf"),url=URL.createObjectURL(blob);box.innerHTML=`<div class="panel" style="margin-top:10px"><div class="panelBody"><b>${esc(name)}</b><p class="note">Retrieved as an actual file.</p><a class="btn primary" href="${url}" download="${esc(name)}">Save Retrieved Document</a></div></div>`}catch(e){box.innerHTML=`<span class="status rejected">ERROR</span><p class="note">${esc(e.message||e)}</p>`}}
+function showView(v){const m={home:"homeView",project:"projectView",projects:"projectsView",documents:"documentsView",api:"apiView"};Object.values(m).forEach(id=>$(id).classList.add("hidden"));$(m[v]).classList.remove("hidden");document.querySelectorAll(".navItem").forEach(n=>n.classList.toggle("active",n.dataset.view===v));$("crumb").textContent=v==="project"?(selected?.name||"Application"):v==="documents"?"Document Retrieval":v==="projects"?"Applications":v==="api"?"Integration / API":"Home"}
+function openModal(){$("projectModal").classList.add("show");$("projectName").focus()}
+
+function openDeleteModal(){
+  if(!selected){
+    toast("Open an application first.",true);
+    return;
+  }
+
+  $("deleteProjectDisplay").value=selected.name;
+  $("deleteConfirmation").value="";
+  $("confirmDelete").disabled=true;
+  $("deleteModal").classList.add("show");
+  $("deleteConfirmation").focus();
+}
+
+async function confirmDeleteApplication(){
+  if(!selected) return;
+
+  const projectName = selected.name;
+  const confirmation = $("deleteConfirmation").value;
+
+  if(confirmation !== projectName){
+    toast("Application name does not match.", true);
+    return;
+  }
+
+  const button = $("confirmDelete");
+  button.disabled = true;
+  button.textContent = "Deleting…";
+
+  try {
+    const response = await fetch(
+      DELETE_APPLICATION_URL,
+      {
+        method: "POST",
+        mode: "cors",
+        headers: {
+          "Content-Type": "application/json",
+          "apikey": SUPABASE_PUBLISHABLE_KEY,
+          "Authorization": "Bearer " + SUPABASE_PUBLISHABLE_KEY
+        },
+        body: JSON.stringify({
+          project: projectName,
+          confirmation: confirmation
+        })
+      }
+    );
+
+    const text = await response.text();
+
+    let data;
+    try {
+      data = JSON.parse(text);
+    } catch {
+      throw new Error(
+        `delete-application returned HTTP ${response.status}: ${text}`
+      );
+    }
+
+    if(!response.ok || !data?.success){
+      throw new Error(
+        data?.error ||
+        `Application deletion failed (HTTP ${response.status}).`
+      );
+    }
+
+    $("deleteModal").classList.remove("show");
+    $("deleteConfirmation").value = "";
+
+    const deletedProject = projectName;
+    selected = null;
+
+    await loadApplications();
+    showView("home");
+
+    toast(
+      `Application "${deletedProject}" deleted successfully.`
+    );
+
+  } catch(error) {
+    console.error("delete-application error:", error);
+    toast(error?.message || String(error), true);
+  } finally {
+    button.disabled = false;
+    button.textContent = "Delete Permanently";
+  }
+}
+
+
+
+let creatingApplication=false;
+
+window.createApplication = async function createApplication(event){
+  if(event){
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
+  if(creatingApplication) return;
+
+  const input=$("projectName");
+  const button=$("createApplication");
+  const name=input.value.trim();
+
+  if(!name){
+    toast("Enter an application name.",true);
+    input.focus();
+    return;
+  }
+
+  creatingApplication=true;
+  button.disabled=true;
+  button.textContent="Creating…";
+  $("createStatus").classList.remove("hidden");
+  $("createStatus").textContent="Connecting to create-project…";
+
+  try{
+    const response=await fetch(
+      SUPABASE_URL+"/functions/v1/create-project",
+      {
+        method:"POST",
+        headers:{
+          "Content-Type":"application/json",
+          "apikey":SUPABASE_PUBLISHABLE_KEY
+        },
+        body:JSON.stringify({name})
+      }
+    );
+
+    const text=await response.text();
+    let data;
+
+    try{
+      data=JSON.parse(text);
+    }catch{
+      throw new Error(
+        `create-project returned HTTP ${response.status}: ${text}`
+      );
+    }
+
+    if(!response.ok || !data?.success){
+      throw new Error(
+        data?.error ||
+        `Application creation failed (HTTP ${response.status}).`
+      );
+    }
+
+    $("projectModal").classList.remove("show");
+    input.value="";
+
+    $("createStatus").textContent="Application created. Loading workspace…";
+
+    toast(
+      data.existing
+        ? `Application "${data.project.name}" already exists.`
+        : `Application "${data.project.name}" created successfully.`
+    );
+
+    await loadApplications();
+
+    if(data.project?.id){
+      await openApplication(data.project.id);
+    }
+
+  }catch(e){
+    console.error("create-project error:",e);
+    if($("createStatus")){
+      $("createStatus").classList.remove("hidden");
+      $("createStatus").textContent="Error: "+(e.message || String(e));
+    }
+    toast(e.message || String(e),true);
+  }finally{
+    creatingApplication=false;
+    button.disabled=false;
+    button.textContent="Create Application";
+  }
+}
+
+$("apiDetails").textContent=`POST ${GET_DOCUMENT_URL}
+
+Headers
+Content-Type: application/json
+apikey: <Supabase publishable key>
+
+Body
+{
+  "project": "Referralmanagement"
+}
+
+200 → actual document file
+404 → No documents available in INBOX.`;
+$("moveApiDetails").textContent=`POST ${MOVE_DOCUMENT_URL}
+
+Body
+{
+  "project": "Referralmanagement",
+  "file": "document.pdf",
+  "destination": "COMPLETED"
+}
+
+or destination: "REJECTED"`;
+document.querySelectorAll(".navItem").forEach(n=>n.onclick=()=>showView(n.dataset.view));
+document.querySelectorAll(".ribbonTab").forEach(n=>n.onclick=()=>{document.querySelectorAll(".ribbonTab").forEach(x=>x.classList.remove("active"));n.classList.add("active");showView(n.dataset.tab)});
+["newApplicationBtn","sideNewApplication","homeCreate","welcomeCreate","projectsCreate"].forEach(id=>$(id).onclick=openModal);
+$("closeModal").onclick=$("cancelModal").onclick=()=>$("projectModal").classList.remove("show");
+$("deleteApplicationBtn").onclick=openDeleteModal;
+$("closeDeleteModal").onclick=$("cancelDelete").onclick=()=>$("deleteModal").classList.remove("show");
+$("confirmDelete").onclick=confirmDeleteApplication;
+$("deleteConfirmation").oninput=e=>{
+  $("confirmDelete").disabled=!selected || e.target.value!==selected.name;
+};
+
+$("createApplication").addEventListener("click",e=>{
+  e.preventDefault();
+  e.stopPropagation();
+  window.createApplication(e);
+});
+$("projectName").onkeydown=e=>{
+  if(e.key==="Enter"){
+    e.preventDefault();
+    window.createApplication(e);
+  }
+};
+$("refreshBtn").onclick=async()=>{await loadApplications();if(selected)await refreshApplication()};$("homeRefresh").onclick=loadApplications;$("projectsRefresh").onclick=loadApplications;$("projectRefresh").onclick=refreshApplication;$("retrieveBtn").onclick=retrieveNext;$("apiRibbon").onclick=()=>showView("api");
+$("retrieveRibbon").onclick=()=>showView("documents");
+$("workflowRibbon").onclick=()=>{if(selected)showView("project");else toast("Open an application first.",true)};
+$("helpRibbon").onclick=()=>toast("Use Applications to open a POC workspace, then retrieve or import documents.");
+
+document.querySelectorAll(".folderTab").forEach(b=>b.onclick=async()=>{document.querySelectorAll(".folderTab").forEach(x=>x.classList.remove("active"));b.classList.add("active");currentFolder=b.dataset.folder;await listDocuments()});
+$("uploadRibbon").onclick=()=>{if(!selected)return toast("Open a project first.",true);currentFolder="INBOX";document.querySelectorAll(".folderTab").forEach(x=>x.classList.toggle("active",x.dataset.folder==="INBOX"));$("fileInput").click()};
+$("projectUpload").onclick=()=>$("fileInput").click();$("dropzone").onclick=()=>{if(!selected)return toast("Open a project first.",true);currentFolder="INBOX";document.querySelectorAll(".folderTab").forEach(x=>x.classList.toggle("active",x.dataset.folder==="INBOX"));$("fileInput").click()};$("fileInput").onchange=e=>{uploadFiles([...e.target.files]);e.target.value=""};
+["dragenter","dragover"].forEach(ev=>$("dropzone").addEventListener(ev,e=>{e.preventDefault();$("dropzone").classList.add("drag")}));
+["dragleave","drop"].forEach(ev=>$("dropzone").addEventListener(ev,e=>{e.preventDefault();$("dropzone").classList.remove("drag")}));
+$("dropzone").addEventListener("drop",e=>uploadFiles([...e.dataTransfer.files]));
+loadApplications();
+</script>
+</body>
+</html>
