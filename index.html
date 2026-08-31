@@ -19,7 +19,7 @@
 .folderTabs{display:flex;border-bottom:1px solid var(--line);background:#f7f8fa}.folderTab{border:0;border-right:1px solid var(--line);background:#edf1f4;padding:9px 16px;color:#4c6173;font-weight:600}.folderTab.active{background:#fff;color:#244d70;border-top:2px solid var(--blue);padding-top:7px}
 .dropzone{border:1px dashed #aebbc7;background:#fafbfd;min-height:100px;display:flex;align-items:center;justify-content:center;text-align:center;padding:18px;margin-bottom:12px;color:#647789}.dropzone.drag{background:#eaf2f8;border-color:#2f6fa3}.dropzone strong{display:block;color:#40576a;margin-bottom:4px}
 .fileTable{width:100%;border-collapse:collapse}.fileTable th{text-align:left;background:#eef2f5;color:#516576;border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:8px 9px;font-size:12px}.fileTable td{padding:8px 9px;border-bottom:1px solid #e5e9ed;color:#354a5c}.fileTable tr:hover td{background:#f7fafc}.fileName{font-weight:600;color:#2e526f}.status{display:inline-flex;padding:3px 7px;border-radius:3px;font-size:11px;font-weight:600;border:1px solid currentColor}.status.inbox{color:#4d7899;background:#edf5fa}.status.completed{color:#397353;background:#eef7f1}.status.rejected{color:#9d4c4c;background:#fbefef}.empty{padding:32px;text-align:center;color:#7a8997}.welcome{border:1px solid var(--line);background:#fff;box-shadow:0 2px 8px #1e2d3c18;padding:28px;text-align:center}
-.modal{position:fixed;inset:0;background:#1d2d3d88;display:none;align-items:center;justify-content:center;z-index:60;padding:20px}.modal.show{display:flex}.dialog{width:min(520px,100%);background:#fff;border:1px solid #aeb9c4;box-shadow:0 12px 35px #0004}.dialogHead{padding:12px 15px;background:var(--navy);color:#fff;font-weight:600;display:flex;justify-content:space-between}.dialogBody{padding:16px}.field{margin-bottom:12px}.field label{display:block;font-size:12px;color:#526779;font-weight:600;margin-bottom:5px}.field input,.field select{width:100%;height:34px;border:1px solid #b9c5cf;border-radius:3px;padding:0 9px}.dialogFoot{padding:11px 15px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:7px;background:#f7f8fa}.apiBox{font-family:Consolas,monospace;background:#263746;color:#e8f0f6;padding:12px;border-radius:3px;white-space:pre-wrap;overflow:auto;font-size:12px}.note{font-size:12px;color:#6d7d8b;line-height:1.5}.toast{position:fixed;right:18px;bottom:18px;z-index:80;background:#263746;color:#fff;padding:10px 13px;border-radius:3px;box-shadow:0 5px 18px #0004;display:none;max-width:420px}.toast.show{display:block}.toast.err{background:#8d3f3f}.hidden{display:none!important}
+.modal{position:fixed;inset:0;background:#1d2d3d88;display:none;align-items:center;justify-content:center;z-index:1000;padding:20px}.modal.show{display:flex}.dialog{width:min(520px,100%);background:#fff;border:1px solid #aeb9c4;box-shadow:0 12px 35px #0004}.dialogHead{padding:12px 15px;background:var(--navy);color:#fff;font-weight:600;display:flex;justify-content:space-between}.dialogBody{padding:16px}.field{margin-bottom:12px}.field label{display:block;font-size:12px;color:#526779;font-weight:600;margin-bottom:5px}.field input,.field select{width:100%;height:34px;border:1px solid #b9c5cf;border-radius:3px;padding:0 9px}.dialogFoot{padding:11px 15px;border-top:1px solid var(--line);display:flex;justify-content:flex-end;gap:7px;background:#f7f8fa}.apiBox{font-family:Consolas,monospace;background:#263746;color:#e8f0f6;padding:12px;border-radius:3px;white-space:pre-wrap;overflow:auto;font-size:12px}.note{font-size:12px;color:#6d7d8b;line-height:1.5}.toast{position:fixed;right:18px;bottom:18px;z-index:80;background:#263746;color:#fff;padding:10px 13px;border-radius:3px;box-shadow:0 5px 18px #0004;display:none;max-width:420px}.toast.show{display:block}.toast.err{background:#8d3f3f}.hidden{display:none!important}
 @media(max-width:950px){.workspace{grid-template-columns:190px 1fr}.dashboardGrid{grid-template-columns:repeat(2,1fr)}.brand{min-width:160px}}@media(max-width:700px){.ribbon{height:78px}.workspace{height:calc(100vh - 126px);grid-template-columns:1fr}.sidebar{display:none}.dashboardGrid{grid-template-columns:1fr 1fr}.topsearch{display:none}}
 </style>
 </head>
@@ -162,8 +162,8 @@
 
 <div class="modal" id="projectModal"><div class="dialog">
   <div class="dialogHead"><span>Create Application Workspace</span><button id="closeModal" style="border:0;background:none;color:#fff;font-size:18px">×</button></div>
-  <div class="dialogBody"><div class="note" style="margin-bottom:12px">Creates the project record and provisions its dedicated storage bucket with INBOX, COMPLETED and REJECTED folders.</div><div class="field"><label>Application Name</label><input id="projectName" maxlength="80" placeholder="Referralmanagement"></div></div>
-  <div class="dialogFoot"><button class="btn" id="cancelModal">Cancel</button><button class="btn primary" id="createApplication">Create Application</button></div>
+  <div class="dialogBody"><div class="note" style="margin-bottom:12px">Creates the project record and provisions its dedicated storage bucket with INBOX, COMPLETED and REJECTED folders.</div><div id="createStatus" class="note hidden" style="margin-bottom:10px;padding:8px;background:#eef5fa;border:1px solid #c9dbe8">Ready</div><div class="field"><label>Application Name</label><input id="projectName" maxlength="80" placeholder="Referralmanagement"></div></div>
+  <div class="dialogFoot"><button class="btn" id="cancelModal">Cancel</button><button type="button" class="btn primary" id="createApplication" onclick="return createApplication(event);">Create Application</button></div>
 </div></div>
 
 
@@ -281,7 +281,12 @@ async function confirmDeleteApplication(){
   }
 }
 
-async function createApplication(){
+window.createApplication = async function createApplication(event){
+  if(event){
+    event.preventDefault();
+    event.stopPropagation();
+  }
+
   const input=$("projectName");
   const button=$("createApplication");
   const name=input.value.trim();
@@ -294,6 +299,8 @@ async function createApplication(){
 
   button.disabled=true;
   button.textContent="Creating…";
+  $("createStatus").classList.remove("hidden");
+  $("createStatus").textContent="Connecting to create-project…";
 
   try{
     const response=await fetch(
@@ -329,6 +336,8 @@ async function createApplication(){
     $("projectModal").classList.remove("show");
     input.value="";
 
+    $("createStatus").textContent="Application created. Loading workspace…";
+
     toast(
       data.existing
         ? `Application "${data.project.name}" already exists.`
@@ -343,6 +352,10 @@ async function createApplication(){
 
   }catch(e){
     console.error("create-project error:",e);
+    if($("createStatus")){
+      $("createStatus").classList.remove("hidden");
+      $("createStatus").textContent="Error: "+(e.message || String(e));
+    }
     toast(e.message || String(e),true);
   }finally{
     button.disabled=false;
@@ -384,7 +397,17 @@ $("deleteConfirmation").oninput=e=>{
   $("confirmDelete").disabled=!selected || e.target.value!==selected.name;
 };
 
-$("createApplication").onclick=createApplication;$("projectName").onkeydown=e=>e.key==="Enter"&&createApplication();
+$("createApplication").addEventListener("click",e=>{
+  e.preventDefault();
+  e.stopPropagation();
+  window.createApplication(e);
+});
+$("projectName").onkeydown=e=>{
+  if(e.key==="Enter"){
+    e.preventDefault();
+    window.createApplication(e);
+  }
+};
 $("refreshBtn").onclick=async()=>{await loadApplications();if(selected)await refreshApplication()};$("homeRefresh").onclick=loadApplications;$("projectsRefresh").onclick=loadApplications;$("projectRefresh").onclick=refreshApplication;$("retrieveBtn").onclick=retrieveNext;$("apiRibbon").onclick=()=>showView("api");
 $("retrieveRibbon").onclick=()=>showView("documents");
 $("workflowRibbon").onclick=()=>{if(selected)showView("project");else toast("Open an application first.",true)};
